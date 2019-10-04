@@ -23,7 +23,7 @@ public class WebCrawlerTest {
 	public void testPage01() {
 		
 		WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-		String args[] = {"C:/Sam/Personal/GE_Take_Home_Project/GE_Take_Home_Project/internet.json", 
+		String args[] = {"C:/config/internet.json", 
 				"0",
 				"page-01"};
 		WebCrawlerThreadPool webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(10);
@@ -43,7 +43,7 @@ public class WebCrawlerTest {
 	public void testPage50() {
 		
 		WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-		String args[] = {"C:/Sam/Personal/GE_Take_Home_Project/GE_Take_Home_Project/internet.json", 
+		String args[] = {"C:/config/internet.json", 
 				"0",
 				"page-50"};
 		WebCrawlerThreadPool webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(10);
@@ -63,7 +63,7 @@ public class WebCrawlerTest {
 	public void testPage60() {
 		
 		WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-		String args[] = {"C:/Sam/Personal/GE_Take_Home_Project/GE_Take_Home_Project/internet.json", 
+		String args[] = {"C:/config/internet.json", 
 				"0",
 				"page-60"};
 		WebCrawlerThreadPool webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(10);
