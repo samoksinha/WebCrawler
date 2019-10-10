@@ -3,8 +3,10 @@ package com.sam.webcrawler;
 import java.util.List;
 import java.util.Map;
 
+import com.sam.exception.ExceptionCodes;
 import com.sam.exception.WebCrawlerException;
 import com.sam.jsonReader.JsonReader;
+import com.sam.model.Response;
 import com.sam.model.WebCrawlerResponse;
 import com.sam.model.WebPageList;
 import com.sam.service.WebCrawlerService;
@@ -19,21 +21,34 @@ public class WebCrawlerBootstrap {
 		
 		WebCrawlerThreadPool webCrawlerThreadPool = null;
 		WebCrawlerResponse webCrawlerResponse = null;
+		
+		String jsonFilePath = null;
+		int threadPoolSize = -1;
+		String startPage = null;
 		try {
-			
-			WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-			
-			if(Integer.parseInt(args[1]) == 0) {
-				webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance();
+			if(args == null 
+					|| args.length != 3) {
+				throw new WebCrawlerException(ExceptionCodes.INVALID_RUNTIME_ARGUMENTS.getValue(), 
+						"Please provide correct Argument values ! i.e. 1. Json File Path (String), 2. ThreadPool Size(int), 3. Crawl Start Page(String)");
 			} else {
-				webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(Integer.parseInt(args[1]));
+				
+				jsonFilePath = args[0];
+				threadPoolSize = Integer.parseInt(args[1]);
+				startPage = args[2];
 			}
 			
-			webCrawlerResponse = webCrawlerBootstrap.doProcessing(args, webCrawlerThreadPool);
+			WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
+			if(threadPoolSize == 0) {
+				webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance();
+			} else {
+				webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(threadPoolSize);
+			}
 			
-			System.out.println("Success Set : " +webCrawlerResponse.getSuccessCrawlSet());
-			System.out.println("Skipped Set : " +webCrawlerResponse.getSkipCrawlSet());
-			System.out.println("Failured Set : " +webCrawlerResponse.getFailureCrawlSet());
+			webCrawlerResponse = webCrawlerBootstrap.doProcessing(jsonFilePath, startPage, webCrawlerThreadPool);
+			
+			System.out.println(Response.SUCCESS.getValue() + " " +webCrawlerResponse.getSuccessCrawlSet());
+			System.out.println(Response.SKIP.getValue() +" " +webCrawlerResponse.getSkipCrawlSet());
+			System.out.println(Response.ERROR.getValue() + " " +webCrawlerResponse.getFailureCrawlSet());
 			
 		} catch (WebCrawlerException wce) {
 			wce.printStackTrace();
@@ -54,7 +69,8 @@ public class WebCrawlerBootstrap {
 		}
 	}
 	
-	public WebCrawlerResponse doProcessing(String args[],
+	public WebCrawlerResponse doProcessing(String jsonFilePath,
+			String startPage,
 			WebCrawlerThreadPool webCrawlerThreadPool) 
 			throws WebCrawlerException {
 		
@@ -64,13 +80,13 @@ public class WebCrawlerBootstrap {
 		WebCrawlerResponse webCrawlerResponse = null;
 		WebPageList webPageList = null;
 		try {
-			if(args != null
-					&& args.length == 3) {
+			if(jsonFilePath != null
+					&& jsonFilePath.length() > 0) {
 				
-				jsonReader = JsonReader.getReaderInstance(args[0]);
+				jsonReader = JsonReader.getReaderInstance(jsonFilePath);
 				
-				if(args[2] != null
-						&& args[2].length() > 0) {
+				if(startPage != null
+						&& startPage.length() > 0) {
 					
 					webCrawlerResponse = WebCrawlerResponse.getResponseInstance();
 					
@@ -80,14 +96,22 @@ public class WebCrawlerBootstrap {
 					webCrawlerService = WebCrawlerService.getServiceInstance(webCrawlerMap,
 							webCrawlerResponse,
 							webCrawlerThreadPool);
-					webCrawlerService.crawlWebPage(args[2]);
+					webCrawlerService.crawlWebPage(startPage);
+				} else {
+					throw new WebCrawlerException(ExceptionCodes.INVALID_START_PAGE.getValue(),
+							"Starting Crawl Page can not be null or empty !. Please provide valid value for Start Page.");
 				}
+				
+			} else {
+				throw new WebCrawlerException(ExceptionCodes.INVALID_FILE_PATH.getValue(),
+						"File Path can not be null or empty !. Please provide valid File Path.");
 			}
 			
 		} catch (WebCrawlerException wce) {
 			throw wce;
 		} catch (Exception e) {
-			throw new WebCrawlerException(500, e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.PROCESSING_INTERNAL_ERROR.getValue(),
+					e.getMessage(), e);
 		}
 		
 		return webCrawlerResponse;
