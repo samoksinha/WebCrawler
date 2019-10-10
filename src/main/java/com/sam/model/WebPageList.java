@@ -24,5 +24,4 @@ public class WebPageList implements Serializable {
 	public void setPages(List<WebPage> pages) {
 		this.pages = pages;
 	}
-	
 }
