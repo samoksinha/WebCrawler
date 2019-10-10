@@ -31,5 +31,4 @@ public class WebPage implements Serializable {
 	public void setLinks(List<String> links) {
 		this.links = links;
 	}
-	
 }
