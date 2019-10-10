@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import com.sam.exception.ExceptionCodes;
 import com.sam.exception.WebCrawlerException;
 import com.sam.model.WebCrawlerResponse;
 import com.sam.threadpool.WebCrawlerThreadPool;
@@ -52,7 +53,9 @@ public class WebCrawlerService {
 				if(this.webCrawlerResponse.getSuccessCrawlSet().contains(startPage)) {
 					this.webCrawlerResponse.getSkipCrawlSet().add(startPage);
 				} else {
-					this.crawlDepthWebPage(startPage);
+					this.webCrawlerResponse.getSuccessCrawlSet().add(startPage);
+					List<String> nextCrawlList = this.webCrawlerMap.get(startPage);
+					this.crawlDepthWebPage(nextCrawlList);
 				}
 				
 			} else {
@@ -62,16 +65,15 @@ public class WebCrawlerService {
 		} catch (WebCrawlerException we) {
 			throw we;
 		} catch (Exception e) {
-			throw new WebCrawlerException(303, e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.CRAWL_INTERNAL_ERROR.getValue(),
+					e.getMessage(), e);
 		}
 	}
 	
-	private void crawlDepthWebPage(String startPage) 
+	private void crawlDepthWebPage(List<String> nextCrawlList) 
 			throws WebCrawlerException {
 		
 		try {
-			this.webCrawlerResponse.getSuccessCrawlSet().add(startPage);
-			List<String> nextCrawlList = this.webCrawlerMap.get(startPage);
 			if(nextCrawlList.size() > 0) {
 				
 				CountDownLatch depthLatch = new CountDownLatch(nextCrawlList.size());
@@ -86,9 +88,11 @@ public class WebCrawlerService {
 			}
 			
 		} catch (InterruptedException ie) {
-			throw new WebCrawlerException(304, ie.getMessage(), ie);
+			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR.getValue(),
+					ie.getMessage(), ie);
 		} catch (Exception e) {
-			throw new WebCrawlerException(305, e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.CRAWL_DEPTH_INTERNAL_ERROR.getValue(),
+					e.getMessage(), e);
 		}
 	}
 }
