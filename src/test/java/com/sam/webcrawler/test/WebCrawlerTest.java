@@ -49,10 +49,8 @@ public class WebCrawlerTest {
 			
 		} catch (FileNotFoundException fnfe) {
 			fnfe.printStackTrace();
-			System.exit(-1);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
 		}
 	}
 	
