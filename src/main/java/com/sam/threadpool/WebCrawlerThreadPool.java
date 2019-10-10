@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.sam.exception.ExceptionCodes;
 import com.sam.exception.WebCrawlerException;
 
 public final class WebCrawlerThreadPool {
@@ -55,12 +56,15 @@ public final class WebCrawlerThreadPool {
 				}
 			}
 		} catch (SecurityException se) {
-			throw new WebCrawlerException(201, se.getMessage(), se);
+			throw new WebCrawlerException(ExceptionCodes.SECURITY_ERROR.getValue(),
+					se.getMessage(), se);
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
-			throw new WebCrawlerException(202, ie.getMessage(), ie);
+			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR.getValue(),
+					ie.getMessage(), ie);
 		} catch (Exception e) {
-			throw new WebCrawlerException(203, e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.SHUTDOWN_SERVICE_ERROR.getValue(),
+					e.getMessage(), e);
 		} finally {
 			executorService = null;
 		}
