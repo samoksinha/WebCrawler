@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Properties;
 
 import org.junit.After;
@@ -28,10 +29,19 @@ public class WebCrawlerTest {
 	@Before
 	public void beforeEachTest() {
 		Properties testProperties = new Properties();
+		URL jsonFileUrl = null;
 		try (InputStream inputStream = this.getClass().getResourceAsStream("/test-config.properties")) {
 			testProperties.load(inputStream);
 			
-			testFilePath = testProperties.getProperty("test-file-location");
+			jsonFileUrl = this.getClass().getResource("/internet.json");
+			if(jsonFileUrl != null 
+					&& jsonFileUrl.getPath() != null
+						&& jsonFileUrl.getPath().length() > 0) {
+				testFilePath = jsonFileUrl.getPath();
+			} else {
+				testFilePath = testProperties.getProperty("test-file-location");
+			}
+			
 			threadPoolSize = Integer.parseInt(testProperties.getProperty("thread-pool-size"));
 			startPage01 = testProperties.getProperty("start-page-01");
 			startPage50 = testProperties.getProperty("start-page-50");
