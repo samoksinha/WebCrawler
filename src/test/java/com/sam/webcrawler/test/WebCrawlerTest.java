@@ -3,7 +3,13 @@ package com.sam.webcrawler.test;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.sam.model.WebCrawlerResponse;
@@ -13,6 +19,32 @@ import com.sam.webcrawler.WebCrawlerBootstrap;
 public class WebCrawlerTest {
 	
 	private WebCrawlerResponse webCrawlerResponse;
+	private String testFilePath;
+	private int threadPoolSize;
+	private String startPage01;
+	private String startPage50;
+	private String startPage60;
+	
+	@Before
+	public void beforeEachTest() {
+		Properties testProperties = new Properties();
+		try (InputStream inputStream = this.getClass().getResourceAsStream("/test-config.properties")) {
+			testProperties.load(inputStream);
+			
+			testFilePath = testProperties.getProperty("test-file-location");
+			threadPoolSize = Integer.parseInt(testProperties.getProperty("thread-pool-size"));
+			startPage01 = testProperties.getProperty("start-page-01");
+			startPage50 = testProperties.getProperty("start-page-50");
+			startPage60 = testProperties.getProperty("start-page-60");
+			
+		} catch (FileNotFoundException fnfe) {
+			fnfe.printStackTrace();
+			System.exit(-1);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
 	
 	@After
 	public void afterEachTest() {
@@ -23,11 +55,14 @@ public class WebCrawlerTest {
 	public void testPage01() {
 		
 		WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-		String args[] = {"C:/config/internet.json", 
-				"0",
-				"page-01"};
-		WebCrawlerThreadPool webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(10);
-		webCrawlerResponse = webCrawlerBootstrap.doProcessing(args, webCrawlerThreadPool);
+		
+		WebCrawlerThreadPool webCrawlerThreadPool = null;
+		if(threadPoolSize == 0) {
+			webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance();
+		} else {
+			webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(threadPoolSize);
+		}
+		webCrawlerResponse = webCrawlerBootstrap.doProcessing(testFilePath, startPage01, webCrawlerThreadPool);
 		
 		assertNotNull("Success Set should not be null !", webCrawlerResponse.getSuccessCrawlSet());
 		assertTrue("Success Set length should be equal to 10!", webCrawlerResponse.getSuccessCrawlSet().size() == 10);
@@ -43,11 +78,14 @@ public class WebCrawlerTest {
 	public void testPage50() {
 		
 		WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-		String args[] = {"C:/config/internet.json", 
-				"0",
-				"page-50"};
-		WebCrawlerThreadPool webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(10);
-		webCrawlerResponse = webCrawlerBootstrap.doProcessing(args, webCrawlerThreadPool);
+		
+		WebCrawlerThreadPool webCrawlerThreadPool = null;
+		if(threadPoolSize == 0) {
+			webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance();
+		} else {
+			webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(threadPoolSize);
+		}
+		webCrawlerResponse = webCrawlerBootstrap.doProcessing(testFilePath, startPage50, webCrawlerThreadPool);
 		
 		assertNotNull("Success Set should not be null !", webCrawlerResponse.getSuccessCrawlSet());
 		assertTrue("Success Set length should be equal to 3!", webCrawlerResponse.getSuccessCrawlSet().size() == 3);
@@ -63,11 +101,14 @@ public class WebCrawlerTest {
 	public void testPage60() {
 		
 		WebCrawlerBootstrap webCrawlerBootstrap = new WebCrawlerBootstrap();
-		String args[] = {"C:/config/internet.json", 
-				"0",
-				"page-60"};
-		WebCrawlerThreadPool webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(10);
-		webCrawlerResponse = webCrawlerBootstrap.doProcessing(args, webCrawlerThreadPool);
+		
+		WebCrawlerThreadPool webCrawlerThreadPool = null;
+		if(threadPoolSize == 0) {
+			webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance();
+		} else {
+			webCrawlerThreadPool = WebCrawlerThreadPool.getThreadPoolInstance(threadPoolSize);
+		}
+		webCrawlerResponse = webCrawlerBootstrap.doProcessing(testFilePath, startPage60, webCrawlerThreadPool);
 		
 		assertNotNull("Success Set should not be null !", webCrawlerResponse.getSuccessCrawlSet());
 		assertTrue("Success Set length should be equal to 0!", webCrawlerResponse.getSuccessCrawlSet().size() == 0);
