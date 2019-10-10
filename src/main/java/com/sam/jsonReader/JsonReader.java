@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sam.exception.ExceptionCodes;
 import com.sam.exception.WebCrawlerException;
 import com.sam.model.WebPage;
 import com.sam.model.WebPageList;
@@ -45,7 +46,8 @@ public final class JsonReader {
 			}
 			
 		} catch (Exception e) {
-			throw new WebCrawlerException(101, e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.JSON_READER_ERROR.getValue(),
+					e.getMessage(), e);
 		}
 		
 		return webPageList;
@@ -66,7 +68,8 @@ public final class JsonReader {
 			}
 			
 		} catch (Exception e) {
-			throw new WebCrawlerException(102, e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.JSON_CONVERION_ERROR.getValue(),
+					e.getMessage(), e);
 		}
 		
 		return webCrawlerMap;
