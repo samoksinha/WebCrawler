@@ -71,5 +71,4 @@ public final class WebCrawlerResponse {
 	public void setFailureCrawlSet(Set<String> failureCrawlSet) {
 		this.failureCrawlSet = failureCrawlSet;
 	}
-	
 }
