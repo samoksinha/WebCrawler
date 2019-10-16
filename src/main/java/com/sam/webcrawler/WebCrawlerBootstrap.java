@@ -28,8 +28,7 @@ public class WebCrawlerBootstrap {
 		try {
 			if(args == null 
 					|| args.length != 3) {
-				throw new WebCrawlerException(ExceptionCodes.INVALID_RUNTIME_ARGUMENTS.getValue(), 
-						"Please provide correct Argument values ! i.e. 1. Json File Path (String), 2. ThreadPool Size(int), 3. Crawl Start Page(String)");
+				throw new WebCrawlerException(ExceptionCodes.INVALID_RUNTIME_ARGUMENTS);
 			} else {
 				
 				jsonFilePath = args[0];
@@ -98,20 +97,17 @@ public class WebCrawlerBootstrap {
 							webCrawlerThreadPool);
 					webCrawlerService.crawlWebPage(startPage);
 				} else {
-					throw new WebCrawlerException(ExceptionCodes.INVALID_START_PAGE.getValue(),
-							"Starting Crawl Page can not be null or empty !. Please provide valid value for Start Page.");
+					throw new WebCrawlerException(ExceptionCodes.INVALID_START_PAGE);
 				}
 				
 			} else {
-				throw new WebCrawlerException(ExceptionCodes.INVALID_FILE_PATH.getValue(),
-						"File Path can not be null or empty !. Please provide valid File Path.");
+				throw new WebCrawlerException(ExceptionCodes.INVALID_FILE_PATH);
 			}
 			
 		} catch (WebCrawlerException wce) {
 			throw wce;
 		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.PROCESSING_INTERNAL_ERROR.getValue(),
-					e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.PROCESSING_INTERNAL_ERROR, e);
 		}
 		
 		return webCrawlerResponse;
