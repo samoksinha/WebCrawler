@@ -1,98 +1,74 @@
-package com.sam.service;
+package com.sam.threadpool;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.sam.exception.ExceptionCodes;
 import com.sam.exception.WebCrawlerException;
-import com.sam.model.WebCrawlerResponse;
-import com.sam.threadpool.WebCrawlerThreadPool;
-import com.sam.worker.CrawlerWorkerThread;
 
-public class WebCrawlerService {
+public final class WebCrawlerThreadPool {
 
-	private static WebCrawlerService webCrawlerService;
+	public final int THREAD_POOL_SIZE = 2;
+	public final int THREAD_POOL_TERMINATION_TIMEOUT = 10;
 	
-	private Map<String,List<String>> webCrawlerMap;
-	private WebCrawlerResponse webCrawlerResponse;
-	private WebCrawlerThreadPool webCrawlerThreadPool;
+	private static WebCrawlerThreadPool webCrawlerThreadPool;
+	private ExecutorService executorService;
 	
-	private WebCrawlerService(Map<String,List<String>> webCrawlerMap,
-			WebCrawlerResponse webCrawlerResponse,
-			WebCrawlerThreadPool webCrawlerThreadPool) {
-		
-		this.webCrawlerMap = webCrawlerMap;
-		this.webCrawlerResponse = webCrawlerResponse;
-		this.webCrawlerThreadPool = webCrawlerThreadPool;
+	private WebCrawlerThreadPool() {
+		this.executorService = Executors.newCachedThreadPool();
+	}
+	private WebCrawlerThreadPool(int poolSize) {
+		this.executorService = Executors.newFixedThreadPool(poolSize);
 	}
 	
-	public static WebCrawlerService getServiceInstance(Map<String,List<String>> webCrawlerMap,
-			WebCrawlerResponse webCrawlerResponse,
-			WebCrawlerThreadPool webCrawlerThreadPool) {
-		
-		if(webCrawlerService == null) {
-			synchronized (WebCrawlerService.class) {
-				if(webCrawlerService == null) {
-					webCrawlerService = new WebCrawlerService(webCrawlerMap,
-							webCrawlerResponse, 
-							webCrawlerThreadPool);
+	public static WebCrawlerThreadPool getThreadPoolInstance() {
+		if(webCrawlerThreadPool == null) {
+			synchronized (WebCrawlerThreadPool.class) {
+				if(webCrawlerThreadPool == null) {
+					webCrawlerThreadPool = new WebCrawlerThreadPool();
 				}
 			}
 		}
 		
-		return webCrawlerService;
+		return webCrawlerThreadPool;
 	}
-	
-	public void crawlWebPage(String startPage) 
-			throws WebCrawlerException {
-		
-		try {
-			if(this.webCrawlerMap.containsKey(startPage)) {
-				
-				if(this.webCrawlerResponse.getSuccessCrawlSet().contains(startPage)) {
-					this.webCrawlerResponse.getSkipCrawlSet().add(startPage);
-				} else {
-					this.webCrawlerResponse.getSuccessCrawlSet().add(startPage);
-					List<String> nextCrawlList = this.webCrawlerMap.get(startPage);
-					this.crawlDepthWebPage(nextCrawlList);
+	public static WebCrawlerThreadPool getThreadPoolInstance(int threadPool) {
+		if(webCrawlerThreadPool == null) {
+			synchronized (WebCrawlerThreadPool.class) {
+				if(webCrawlerThreadPool == null) {
+					webCrawlerThreadPool = new WebCrawlerThreadPool(threadPool);
 				}
-				
-			} else {
-				this.webCrawlerResponse.getFailureCrawlSet().add(startPage);
 			}
-			
-		} catch (WebCrawlerException we) {
-			throw we;
-		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.CRAWL_INTERNAL_ERROR.getValue(),
-					e.getMessage(), e);
 		}
+		
+		return webCrawlerThreadPool;
 	}
 	
-	private void crawlDepthWebPage(List<String> nextCrawlList) 
+	public void shutDownService() 
 			throws WebCrawlerException {
 		
 		try {
-			if(nextCrawlList.size() > 0) {
-				
-				CountDownLatch depthLatch = new CountDownLatch(nextCrawlList.size());
-				for(int i = 0; i < nextCrawlList.size(); i++) {
-					Runnable crawlerWorkerThread = new CrawlerWorkerThread(WebCrawlerService.webCrawlerService,
-							depthLatch,
-							nextCrawlList.get(i));
-					this.webCrawlerThreadPool.getExecutorService().execute(crawlerWorkerThread);
+			if(executorService != null) {
+				if(!executorService.isShutdown()) {
+					executorService.shutdown();
+					executorService.awaitTermination(THREAD_POOL_TERMINATION_TIMEOUT, TimeUnit.MILLISECONDS);
 				}
-				
-				depthLatch.await();
 			}
-			
+		} catch (SecurityException se) {
+			throw new WebCrawlerException(ExceptionCodes.SECURITY_ERROR, se);
 		} catch (InterruptedException ie) {
-			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR.getValue(),
-					ie.getMessage(), ie);
+			Thread.currentThread().interrupt();
+			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR, ie);
 		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.CRAWL_DEPTH_INTERNAL_ERROR.getValue(),
-					e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.SHUTDOWN_SERVICE_ERROR, e);
+		} finally {
+			executorService = null;
 		}
 	}
+
+	public ExecutorService getExecutorService() {
+		return executorService;
+	}
+	
 }
