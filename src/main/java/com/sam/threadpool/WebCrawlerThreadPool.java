@@ -56,15 +56,12 @@ public final class WebCrawlerThreadPool {
 				}
 			}
 		} catch (SecurityException se) {
-			throw new WebCrawlerException(ExceptionCodes.SECURITY_ERROR.getValue(),
-					se.getMessage(), se);
+			throw new WebCrawlerException(ExceptionCodes.SECURITY_ERROR, se);
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
-			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR.getValue(),
-					ie.getMessage(), ie);
+			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR, ie);
 		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.SHUTDOWN_SERVICE_ERROR.getValue(),
-					e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.SHUTDOWN_SERVICE_ERROR, e);
 		} finally {
 			executorService = null;
 		}
