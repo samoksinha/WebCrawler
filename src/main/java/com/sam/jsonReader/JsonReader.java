@@ -46,8 +46,7 @@ public final class JsonReader {
 			}
 			
 		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.JSON_READER_ERROR.getValue(),
-					e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.JSON_READER_ERROR, e);
 		}
 		
 		return webPageList;
@@ -68,8 +67,7 @@ public final class JsonReader {
 			}
 			
 		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.JSON_CONVERION_ERROR.getValue(),
-					e.getMessage(), e);
+			throw new WebCrawlerException(ExceptionCodes.JSON_CONVERION_ERROR, e);
 		}
 		
 		return webCrawlerMap;
