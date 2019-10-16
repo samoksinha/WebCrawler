@@ -4,35 +4,25 @@ public class WebCrawlerException extends RuntimeException {
 
 	private static final long serialVersionUID = -1959239616023797151L;
 	
-	private String exceptionCode;
-	private String exceptionMessage;
+	private ExceptionCodes exceptionCode;
 	private Throwable exception;
 
-	public WebCrawlerException(String exceptionCode, String exceptionMessage) {
-		super(exceptionMessage);
+	public WebCrawlerException(ExceptionCodes exceptionCode) {
+		super(exceptionCode.getValue());
 		this.exceptionCode = exceptionCode;
-		this.exceptionMessage = exceptionMessage;
 	}
 	
-	public WebCrawlerException(String exceptionCode, String exceptionMessage, Throwable t) {
-		super(exceptionMessage, t);
+	public WebCrawlerException(ExceptionCodes exceptionCode, Throwable t) {
+		super(exceptionCode.getValue(), t);
 		this.exceptionCode = exceptionCode;
-		this.exceptionMessage = exceptionMessage;
 		this.exception = t;
 	}
 
-	public String getExceptionCode() {
+	public ExceptionCodes getExceptionCode() {
 		return exceptionCode;
 	}
-	public void setExceptionCode(String exceptionCode) {
+	public void setExceptionCode(ExceptionCodes exceptionCode) {
 		this.exceptionCode = exceptionCode;
-	}
-
-	public String getExceptionMessage() {
-		return exceptionMessage;
-	}
-	public void setExceptionMessage(String exceptionMessage) {
-		this.exceptionMessage = exceptionMessage;
 	}
 
 	public Throwable getException() {
