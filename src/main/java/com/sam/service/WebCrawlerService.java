@@ -1,74 +1,95 @@
-package com.sam.threadpool;
+package com.sam.service;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import com.sam.exception.ExceptionCodes;
 import com.sam.exception.WebCrawlerException;
+import com.sam.model.WebCrawlerResponse;
+import com.sam.threadpool.WebCrawlerThreadPool;
+import com.sam.worker.CrawlerWorkerThread;
 
-public final class WebCrawlerThreadPool {
+public class WebCrawlerService {
 
-	public final int THREAD_POOL_SIZE = 2;
-	public final int THREAD_POOL_TERMINATION_TIMEOUT = 10;
+	private static WebCrawlerService webCrawlerService;
 	
-	private static WebCrawlerThreadPool webCrawlerThreadPool;
-	private ExecutorService executorService;
+	private Map<String,List<String>> webCrawlerMap;
+	private WebCrawlerResponse webCrawlerResponse;
+	private WebCrawlerThreadPool webCrawlerThreadPool;
 	
-	private WebCrawlerThreadPool() {
-		this.executorService = Executors.newCachedThreadPool();
+	private WebCrawlerService(Map<String,List<String>> webCrawlerMap,
+			WebCrawlerResponse webCrawlerResponse,
+			WebCrawlerThreadPool webCrawlerThreadPool) {
+		
+		this.webCrawlerMap = webCrawlerMap;
+		this.webCrawlerResponse = webCrawlerResponse;
+		this.webCrawlerThreadPool = webCrawlerThreadPool;
 	}
-	private WebCrawlerThreadPool(int poolSize) {
-		this.executorService = Executors.newFixedThreadPool(poolSize);
-	}
 	
-	public static WebCrawlerThreadPool getThreadPoolInstance() {
-		if(webCrawlerThreadPool == null) {
-			synchronized (WebCrawlerThreadPool.class) {
-				if(webCrawlerThreadPool == null) {
-					webCrawlerThreadPool = new WebCrawlerThreadPool();
+	public static WebCrawlerService getServiceInstance(Map<String,List<String>> webCrawlerMap,
+			WebCrawlerResponse webCrawlerResponse,
+			WebCrawlerThreadPool webCrawlerThreadPool) {
+		
+		if(webCrawlerService == null) {
+			synchronized (WebCrawlerService.class) {
+				if(webCrawlerService == null) {
+					webCrawlerService = new WebCrawlerService(webCrawlerMap,
+							webCrawlerResponse, 
+							webCrawlerThreadPool);
 				}
 			}
 		}
 		
-		return webCrawlerThreadPool;
-	}
-	public static WebCrawlerThreadPool getThreadPoolInstance(int threadPool) {
-		if(webCrawlerThreadPool == null) {
-			synchronized (WebCrawlerThreadPool.class) {
-				if(webCrawlerThreadPool == null) {
-					webCrawlerThreadPool = new WebCrawlerThreadPool(threadPool);
-				}
-			}
-		}
-		
-		return webCrawlerThreadPool;
+		return webCrawlerService;
 	}
 	
-	public void shutDownService() 
+	public void crawlWebPage(String startPage) 
 			throws WebCrawlerException {
 		
 		try {
-			if(executorService != null) {
-				if(!executorService.isShutdown()) {
-					executorService.shutdown();
-					executorService.awaitTermination(THREAD_POOL_TERMINATION_TIMEOUT, TimeUnit.MILLISECONDS);
+			if(this.webCrawlerMap.containsKey(startPage)) {
+				
+				if(this.webCrawlerResponse.getSuccessCrawlSet().contains(startPage)) {
+					this.webCrawlerResponse.getSkipCrawlSet().add(startPage);
+				} else {
+					this.webCrawlerResponse.getSuccessCrawlSet().add(startPage);
+					List<String> nextCrawlList = this.webCrawlerMap.get(startPage);
+					this.crawlDepthWebPage(nextCrawlList);
 				}
+				
+			} else {
+				this.webCrawlerResponse.getFailureCrawlSet().add(startPage);
 			}
-		} catch (SecurityException se) {
-			throw new WebCrawlerException(ExceptionCodes.SECURITY_ERROR, se);
-		} catch (InterruptedException ie) {
-			Thread.currentThread().interrupt();
-			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR, ie);
+			
+		} catch (WebCrawlerException we) {
+			throw we;
 		} catch (Exception e) {
-			throw new WebCrawlerException(ExceptionCodes.SHUTDOWN_SERVICE_ERROR, e);
-		} finally {
-			executorService = null;
+			throw new WebCrawlerException(ExceptionCodes.CRAWL_INTERNAL_ERROR, e);
 		}
 	}
-
-	public ExecutorService getExecutorService() {
-		return executorService;
-	}
 	
+	private void crawlDepthWebPage(List<String> nextCrawlList) 
+			throws WebCrawlerException {
+		
+		try {
+			if(nextCrawlList.size() > 0) {
+				
+				CountDownLatch depthLatch = new CountDownLatch(nextCrawlList.size());
+				for(int i = 0; i < nextCrawlList.size(); i++) {
+					Runnable crawlerWorkerThread = new CrawlerWorkerThread(WebCrawlerService.webCrawlerService,
+							depthLatch,
+							nextCrawlList.get(i));
+					this.webCrawlerThreadPool.getExecutorService().execute(crawlerWorkerThread);
+				}
+				
+				depthLatch.await();
+			}
+			
+		} catch (InterruptedException ie) {
+			throw new WebCrawlerException(ExceptionCodes.THREAD_INTERRUPT_ERROR, ie);
+		} catch (Exception e) {
+			throw new WebCrawlerException(ExceptionCodes.CRAWL_DEPTH_INTERNAL_ERROR, e);
+		}
+	}
 }
